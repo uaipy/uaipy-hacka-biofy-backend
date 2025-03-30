@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from context_manager_db import ContextManagerDB
@@ -9,6 +10,7 @@ import openai
 import os
 import requests
 
+from resposta_handler import montar_resposta
 import user_schema
 import user_service
 
@@ -88,27 +90,51 @@ def enviar_mensagem(msg: Mensagem):
 
 # Webhook para receber mensagens dos usuários
 @app.post("/webhook/zapi")
-async def receber_mensagem(request: Request):
-    body = await request.json()
-    print(body)
-    if body.get("status") == "RECEIVED":
-        message = body["text"]["message"]
-        sender = body.get("senderName")
-        remetente = body.get("phone")
+async def receber_mensagem(request: Request, db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+    except Exception as e:
+        print(f"[ERRO] Falha ao processar JSON: {e}")
+        raise HTTPException(status_code=400, detail="Corpo da requisição inválido.")
 
-        print(f"📥 Nova mensagem de {sender} ({remetente}): {message}")
+    phone = body.get("phone")
+    
+    if not phone:
+        print("[ERRO] Número de telefone ausente no payload.")
+        raise HTTPException(status_code=400, detail="Número de telefone ausente.")
+    
+    headers = {
+        "Client-Token": CLIENT_TOKEN
+    }
+    
+    db_user = user_service.get_user_by_telefone(db, phone)
+    if db_user is None:
+        try:
+            user_response= {
+            "phone": phone,
+            "message": "Olá, recebemos sua mensagem, mas percebemos que infelizmente voce ainda nao tem cadastro. Por favor, va ao nosso site e se cadastre."
+            }
+            response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print(f"[ERRO] Falha ao enviar mensagem para ZAPI: {e}")
+            raise HTTPException(status_code=502, detail="Erro ao enviar mensagem para o provedor externo.")
 
-        # Resposta automática
-        user_response = {
-            "phone": remetente,
-            "message": f"Olá {sender}, recebi sua mensagem: \"{message}\". Essa é uma mensagem da UAIGRO para voce se sentir mais confiante."
-        }
-        headers = {
-            "Client-Token": CLIENT_TOKEN
-        }
-        api_response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
+        return JSONResponse(content={"status": response.json()})
 
-    return {"status": api_response.json()}
+    print(f"📥 Nova mensagem de {db_user.name} ({phone}).")
+    print("MENSAGEM PURA:", body)
+
+    user_response = montar_resposta(db_user.name, phone, body)
+
+    try:
+        response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"[ERRO] Falha ao enviar mensagem para ZAPI: {e}")
+        raise HTTPException(status_code=502, detail="Erro ao enviar mensagem para o provedor externo.")
+
+    return JSONResponse(content={"status": response.json()})
 
 
 # USER ROUTES
