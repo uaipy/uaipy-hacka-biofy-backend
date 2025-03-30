@@ -42,10 +42,10 @@ def montar_resposta(sender: str, phone: str, body: Dict[str, Any], api_key, user
         else:
             return {
                 "phone": phone,
-                "message": f"{mensagem_base} recebi seu documento, mas infelizmente só trabalhamos com PDF atualmente."
+                "message": f"Eita, eu recebi o seu documento, mas por enquanto só trabalho com arquivos no formato PDF. Será que você poderia me enviar de novo no formato correto? Aí o negócio vai pra frente!"
             }
 
     return {
         "phone": phone,
-        "message": f"{mensagem_base} recebi sua mensagem. Mas infelizmente só trabalhamos com texto, imagens e PDFs."
+        "message": f"{mensagem_base} tudo na paz? To vendo aqui que você me mandou algo, mas infelizmente só trabalho com textos, imagens, áudios e arquivos no formato PDF. Me mande outra mensagem, mas seguindo esses formatos, aí sim vou conseguir te ajudar!"
     }

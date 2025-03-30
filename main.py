@@ -106,7 +106,7 @@ def enviar_mensagem(body: MensagemBody, db: Session = Depends(get_db)):
         try:
             user_response= {
             "phone": phone,
-            "message": "Olá, recebemos sua mensagem, mas percebemos que infelizmente voce ainda nao tem cadastro. Por favor, va ao nosso site e se cadastre."
+            "message": "Oi meu amigo, recebi a sua mensagem! Mas antes da gente bater um papo, cê precisa se cadastrar lá no nosso site, é rapidim, prometo! Entra lá: https://uaigro.vercel.app/ e faz o seu cadastro. Depois disso, tô aqui te esperando pra ajudar com o que precisar!"
             }
             response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
             response.raise_for_status()
@@ -153,7 +153,7 @@ async def receber_mensagem(request: Request, db: Session = Depends(get_db)):
         try:
             user_response= {
             "phone": phone,
-            "message": "Olá, recebemos sua mensagem, mas percebemos que infelizmente voce ainda nao tem cadastro. Por favor, va ao nosso site e se cadastre."
+            "message": "Oi meu amigo, recebi a sua mensagem! Mas antes da gente bater um papo, cê precisa se cadastrar lá no nosso site, é rapidim, prometo! Entra lá: https://uaigro.vercel.app/ e faz o seu cadastro. Depois disso, tô aqui te esperando pra ajudar com o que precisar!."
             }
             response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
             response.raise_for_status()
@@ -182,7 +182,22 @@ async def receber_mensagem(request: Request, db: Session = Depends(get_db)):
 
 @app.post("/user", response_model=user_schema.UserOut)
 def create_user(user: user_schema.UserCreate, db: Session = Depends(get_db)):
-    return user_service.create_user(db, user)
+    user = user_service.create_user(db, user)
+    try:
+        headers = {
+            "Client-Token": CLIENT_TOKEN
+        }
+        user_response= {
+            "phone": user.telefone,
+            "message": f"Olá {user.name}, tudo bem? Seja bem vindo ao UAIgro! Como posso te ajudar hoje?"
+        }
+        response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"[ERRO] Falha ao enviar mensagem para ZAPI: {e}")
+        raise HTTPException(status_code=502, detail="Erro ao enviar mensagem para o provedor externo.")
+
+    return user
 
 @app.get("/user/{user_id}", response_model=user_schema.UserOut)
 def read_user(user_id: int, db: Session = Depends(get_db)):
