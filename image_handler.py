@@ -8,7 +8,7 @@ import openai
 import requests
 
 
-def process_image(body, api_key) -> str:
+def process_image(body, api_key, user) -> str:
     url = body["image"].get("imageUrl", "")
     openai.api_key = api_key
     # Gera nome aleatório para o arquivo
@@ -34,7 +34,7 @@ def process_image(body, api_key) -> str:
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "Você é um agronomo inteligente e especialista em prevenção de pragas. Me descreva o que você vê nesta imagem, e caso encontre algum possivel problema, me ajude a solucionar."},
+                        {"type": "text", "text": f"Você é um agronomo inteligente e especialista em prevenção de pragas. Me descreva o que você vê nesta imagem, e caso encontre algum possivel problema, me ajude a solucionar. Esses são os meus dados a serem utilizados como contexto: Dados do produtor rural: {user.details}\n"},
                         {
                             "type": "image_url",
                             "image_url": {

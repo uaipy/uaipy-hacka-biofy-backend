@@ -1,7 +1,7 @@
 import openai
 
 
-def process_text(message, api_key) -> str:
+def process_text(message, api_key, user) -> str:
     openai.api_key = api_key
 
     prompt_base = (
@@ -9,6 +9,9 @@ def process_text(message, api_key) -> str:
             "a tomarem decisões com base em dados meteorológicos, solo, cultivo e produtividade. "
             "Forneça respostas claras, práticas e confiáveis. Use linguagem simples, direta e amigável. "
             "Se a pergunta for técnica, explique os conceitos de forma acessível."
+            "\n\n"
+            "Esses são os dados do produtor a serem utilizados como contexto:"
+            f"Dados do produtor: {user.details}\n"
             "\n\n"
             f"Pergunta do produtor: {message}\n"
             "Resposta:"

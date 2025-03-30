@@ -34,10 +34,11 @@ def clean_text(text):
 def send_to_gpt(prompt, api_key, model="gpt-4o"):
     openai.api_key = api_key
 
+    
     response = openai.ChatCompletion.create(
         model=model,
         messages=[
-            {"role": "system", "content": "Você é um especialista em solos agrícolas."},
+            {"role": "system", "content": "Você é um especialista em agricultura, controle de pragas e meteorologia que ajuda produtores rurais com orientações práticas."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.5
@@ -45,7 +46,7 @@ def send_to_gpt(prompt, api_key, model="gpt-4o"):
     return response.choices[0].message["content"]
 
 # 4. Fluxo principal
-def process_pdf(body, api_key) -> str:
+def process_pdf(body, api_key, user) -> str:
     # URL do PDF
     url = body["document"].get("documentUrl", "")
 
@@ -53,13 +54,22 @@ def process_pdf(body, api_key) -> str:
     raw_text = extract_text_from_url(url)
     cleaned_text = clean_text(raw_text)
 
-    # Crie um prompt técnico
-    prompt = (
-        "Analise o seguinte laudo de solo e forneça uma explicação técnica sobre a fertilidade, "
-        "interpretação dos resultados e recomendações de correção caso necessário. Observação. Considere que sou pouco alfabetizado. Seja direto e use linguagem simples, que fascilitem a explicação. Evite elementos markdown. \n\n"
-        f"{cleaned_text}"
-    )
+    prompt_base = (
+            "Você é um assistente agrícola especializado em ajudar produtores rurais "
+            "a tomarem decisões com base em dados meteorológicos, solo, cultivo e produtividade. "
+            "Forneça respostas claras, práticas e confiáveis. Use linguagem simples, direta e amigável. "
+            "Se a pergunta for técnica, explique os conceitos de forma acessível."
+            "\n\n"
+            "Esses são os dados do produtor a serem utilizados como contexto:"
+            f"Dados do produtor: {user.details}\n"
+            "\n\n"
+            f"Analise o seguinte laudo de solo e forneça uma explicação técnica sobre a fertilidade.\n"
+            "\n\n"
+            f"Dados do laudo: {cleaned_text}\n"
+            "\n\n"
+            "Resposta:"
+        )
 
     # Envia para o GPT
-    resposta = send_to_gpt(prompt, api_key)
+    resposta = send_to_gpt(prompt_base, api_key)
     return resposta

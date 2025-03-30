@@ -4,7 +4,7 @@ from io import BytesIO
 
 
 
-def process_audio(body, api_key) -> str:
+def process_audio(body, api_key, user) -> str:
     # Substitua pela sua chave da OpenAI
     openai.api_key = api_key
 
@@ -31,6 +31,9 @@ def process_audio(body, api_key) -> str:
         "a tomarem decisões com base em dados meteorológicos, solo, cultivo e produtividade. "
         "Forneça respostas claras, práticas e confiáveis. Use linguagem simples, direta e amigável. "
         "Se a pergunta for técnica, explique os conceitos de forma acessível."
+        "\n\n"
+        "Esses são os dados do produtor a serem utilizados como contexto:"
+        f"Dados do produtor: {user.details}\n"
         "\n\n"
         f"Pergunta do produtor: {transcription}\n"
         "Resposta:"

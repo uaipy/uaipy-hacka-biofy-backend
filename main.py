@@ -136,7 +136,7 @@ async def receber_mensagem(request: Request, db: Session = Depends(get_db)):
     print(f"📥 Nova mensagem de {db_user.name} ({phone}).")
     print("MENSAGEM PURA:", body)
 
-    user_response = montar_resposta(db_user.name, phone, body, API_KEY)
+    user_response = montar_resposta(db_user.name, phone, body, API_KEY, db_user)
 
     try:
         response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
