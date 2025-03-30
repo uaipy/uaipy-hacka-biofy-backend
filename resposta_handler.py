@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from image_handler import process_image
 from pdf_handler import process_pdf
 
 
@@ -15,9 +16,10 @@ def montar_resposta(sender: str, phone: str, body: Dict[str, Any], api_key) -> D
         }
 
     if isinstance(body.get("image"), dict):
+        message = process_image(body, api_key)
         return {
             "phone": phone,
-            "message": f"{mensagem_base} recebi sua IMAGEM. Essa é uma mensagem da UAIGRO para você se sentir mais confiante."
+            "message": message
         }
 
     if isinstance(body.get("document"), dict):
