@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from audio_handler import process_audio
 from image_handler import process_image
 from pdf_handler import process_pdf
 from text_handler import process_text
@@ -18,6 +19,13 @@ def montar_resposta(sender: str, phone: str, body: Dict[str, Any], api_key) -> D
 
     if isinstance(body.get("image"), dict):
         message = process_image(body, api_key)
+        return {
+            "phone": phone,
+            "message": message
+        }
+    
+    if isinstance(body.get("audio"), dict):
+        message = process_audio(body, api_key)
         return {
             "phone": phone,
             "message": message
