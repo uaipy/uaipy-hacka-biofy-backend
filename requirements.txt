@@ -4,3 +4,5 @@ openai==0.28
 tiktoken
 sqlalchemy
 pydantic
+psycopg2-binary
+python-dotenv

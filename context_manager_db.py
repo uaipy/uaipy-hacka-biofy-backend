@@ -18,7 +18,7 @@ class ContextManagerDB:
     def count_tokens(self, messages: List[str]) -> int:
         return sum(len(enc.encode(msg)) for msg in messages)
 
-    def add_message(self, user_id: str, role: str, content: str):
+    def add_message(self, user_id: int, role: str, content: str):
         msg = Message(user_id=user_id, role=role, content=content)
         self.db.add(msg)
         self.db.commit()
@@ -28,21 +28,24 @@ class ContextManagerDB:
         if self.count_tokens([m.content for m in messages]) > SUMMARIZE_THRESHOLD:
             self._summarize_context(user_id, messages)
 
-    def get_history(self, user_id: str) -> List[Message]:
+    def get_history(self, user_id: int) -> List[Message]:
         return self.db.query(Message).filter(Message.user_id == user_id).order_by(Message.timestamp).all()
 
-    def get_context(self, user_id: str) -> List[Dict]:
+    def get_context(self, user_id: int) -> List[Dict]:
         messages = self.get_history(user_id)
+        print("messages: ", messages)
         window = messages[-WINDOW_SIZE:]
         summary = self.db.query(Summary).filter(Summary.user_id == user_id).first()
+        print("summary: ", summary)
 
         msg_list = [{"role": msg.role, "content": msg.content} for msg in window]
         if summary:
             return [{"role": "system", "content": f"Resumo: {summary.content}"}] + msg_list
         return msg_list
 
-    def _summarize_context(self, user_id: str, messages: List[Message]):
+    def _summarize_context(self, user_id: int, messages: List[Message]):
         text_to_summarize = "\n".join([f"{m.role}: {m.content}" for m in messages[:-WINDOW_SIZE]])
+        print("text_to_smarize: ", summary)
 
         prompt = [
             {"role": "system", "content": "Resuma a conversa a seguir em até 5 linhas:"},
