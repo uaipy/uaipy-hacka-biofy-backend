@@ -20,11 +20,12 @@ load_dotenv()
 # Z-API DATA
 INSTANCE_ID = os.getenv("INSTANCE_ID")
 TOKEN = os.getenv("TOKEN")
+API_KEY = os.getenv("OPENAI_API_KEY")
 CLIENT_TOKEN= os.getenv("CLIENT_TOKEN")
 ZAPI_URL = f"https://api.z-api.io/instances/{INSTANCE_ID}/token/{TOKEN}"
 
 # OpenAI DATA
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = API_KEY
 openai.project = os.getenv("API_PROJECT")
 models.Base.metadata.create_all(bind=engine)
 
@@ -125,7 +126,7 @@ async def receber_mensagem(request: Request, db: Session = Depends(get_db)):
     print(f"📥 Nova mensagem de {db_user.name} ({phone}).")
     print("MENSAGEM PURA:", body)
 
-    user_response = montar_resposta(db_user.name, phone, body)
+    user_response = montar_resposta(db_user.name, phone, body, API_KEY)
 
     try:
         response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
