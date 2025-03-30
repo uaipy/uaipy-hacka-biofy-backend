@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from context_manager_db import ContextManagerDB
@@ -30,6 +31,15 @@ openai.project = os.getenv("API_PROJECT")
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# Configuração do CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todas as origens
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos os métodos
+    allow_headers=["*"],  # Permite todos os headers
+)
 
 # Request/response
 class ChatRequest(BaseModel):
