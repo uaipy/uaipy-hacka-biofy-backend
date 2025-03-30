@@ -2,7 +2,7 @@ import os
 import openai
 
 # Configurar sua chave de API
-openai.api_key = "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" #ADD THE KEY HERE - DO NOT COMMIT SECRETS
+openai.api_key = "" #ADD THE KEY HERE - DO NOT COMMIT SECRETS
 
 # Lista de prompts
 prompts = [
