@@ -49,6 +49,13 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
 
+class MessageText(BaseModel):
+    message: str
+
+class MensagemBody(BaseModel):
+    numero: str
+    text: MessageText
+
 # Dependency
 def get_db():
     db = SessionLocal()
@@ -86,18 +93,41 @@ class Mensagem(BaseModel):
 
 # Endpoint para envio manual de mensagens
 @app.post("/enviar")
-def enviar_mensagem(msg: Mensagem):
-    print(msg)
-    payload = {
-        "phone": msg.numero,
-        "message": msg.mensagem
-    }
+def enviar_mensagem(body: MensagemBody, db: Session = Depends(get_db)):
+    print(f"📥 Nova mensagem de {body}.")
+    phone = body.numero
+
     headers = {
         "Client-Token": CLIENT_TOKEN
-    }
-    response = requests.post(f"{ZAPI_URL}/send-messages", json=payload, headers=headers)
-    print(response.json())
-    return response.json()
+    }        
+
+    db_user = user_service.get_user_by_telefone(db, phone)
+    if db_user is None:
+        try:
+            user_response= {
+            "phone": phone,
+            "message": "Olá, recebemos sua mensagem, mas percebemos que infelizmente voce ainda nao tem cadastro. Por favor, va ao nosso site e se cadastre."
+            }
+            response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print(f"[ERRO] Falha ao enviar mensagem para ZAPI: {e}")
+            raise HTTPException(status_code=502, detail="Erro ao enviar mensagem para o provedor externo.")
+
+        return JSONResponse(content={"status": response.json()})
+
+    # Convertendo o objeto Pydantic para dicionário
+    body_dict = body.model_dump()
+    user_response = montar_resposta(db_user.name, phone, body_dict, API_KEY)
+    
+    try:
+        response = requests.post(f"{ZAPI_URL}/send-messages", json=user_response, headers=headers)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"[ERRO] Falha ao enviar mensagem para ZAPI: {e}")
+        raise HTTPException(status_code=502, detail="Erro ao enviar mensagem para o provedor externo.")
+
+    return JSONResponse(content={"status": response.json()})
 
 # Webhook para receber mensagens dos usuários
 @app.post("/webhook/zapi")
