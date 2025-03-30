@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from image_handler import process_image
 from pdf_handler import process_pdf
+from text_handler import process_text
 
 
 def montar_resposta(sender: str, phone: str, body: Dict[str, Any], api_key) -> Dict[str, str]:
@@ -9,10 +10,10 @@ def montar_resposta(sender: str, phone: str, body: Dict[str, Any], api_key) -> D
     mensagem_base = f"Olá {sender},"
 
     if isinstance(body.get("text"), dict):
-        message = body["text"].get("message", "")
+        message = process_text(body["text"].get("message", ""), api_key) 
         return {
             "phone": phone,
-            "message": f"{mensagem_base} recebi sua mensagem de TEXTO: \"{message}\". Essa é uma mensagem da UAIGRO para você se sentir mais confiante."
+            "message": message
         }
 
     if isinstance(body.get("image"), dict):
